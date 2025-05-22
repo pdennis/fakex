@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FakeFeed - Book Tweets</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>FakeX</h1>
+        <p>Stray thoughts from your library</p>
+    </header>
+
+    <main id="tweet-feed">
+        <div class="loading">Loading your book tweets...</div>
+    </main>
+
+    <script>
+        // Element references
+        const tweetFeed = document.getElementById('tweet-feed');
+        let lastTweetTimestamp = 0;
+        let displayedTweetIds = new Set();
+        let isLoading = false;
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        // Create a tweet element
+        function createTweetElement(tweet) {
+            const tweetEl = document.createElement('div');
+            tweetEl.className = 'tweet';
+            tweetEl.dataset.id = tweet.timestamp.toString(); // Use timestamp as ID
+            
+            tweetEl.innerHTML = `
+                <div class="tweet-header">
+                    <span class="tweet-author">${tweet.author}</span>
+                    <span class="tweet-time">${formatTime(tweet.timestamp)}</span>
+                </div>
+                <div class="tweet-content">${tweet.tweet}</div>
+                <div class="tweet-book">
+                    <span class="tweet-title">${tweet.title}</span>
+                </div>
+            `;
+            
+            return tweetEl;
+        }
+
+        // Fetch tweets
+        async function fetchTweets() {
+            if (isLoading) return;
+            isLoading = true;
+            
+            try {
+                const response = await fetch('/api/tweets');
+                const tweets = await response.json();
+                
+                // Clear loading message
+                if (tweetFeed.querySelector('.loading')) {
+                    tweetFeed.innerHTML = '';
+                }
+                
+                // Check for new tweets that haven't been displayed yet
+                const newTweets = tweets.filter(tweet => {
+                    const tweetId = tweet.timestamp.toString();
+                    return !displayedTweetIds.has(tweetId);
+                });
+                
+                // Add new tweets
+                if (newTweets.length > 0) {
+                    for (const tweet of newTweets) {
+                        const tweetId = tweet.timestamp.toString();
+                        displayedTweetIds.add(tweetId);
+                        
+                        const tweetEl = createTweetElement(tweet);
+                        tweetFeed.insertBefore(tweetEl, tweetFeed.firstChild);
+                        
+                        // Update last timestamp if this is newer
+                        if (tweet.timestamp > lastTweetTimestamp) {
+                            lastTweetTimestamp = tweet.timestamp;
+                        }
+                    }
+                    
+                    // Limit displayed tweets to most recent 100
+                    const tweetElements = tweetFeed.querySelectorAll('.tweet');
+                    if (tweetElements.length > 100) {
+                        for (let i = 100; i < tweetElements.length; i++) {
+                            tweetElements[i].remove();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching tweets:', error);
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // Scroll detection for infinite scroll
+        function handleScroll() {
+            const scrollY = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.body.offsetHeight;
+            
+            // If we're near the bottom, fetch more tweets
+            if (scrollY + windowHeight >= documentHeight - 300) {
+                fetchTweets();
+            }
+        }
+
+        // Initial load
+        fetchTweets();
+        
+        // Set up polling for new tweets
+        setInterval(fetchTweets, 5000);
+        
+        // Set up scroll event
+        window.addEventListener('scroll', handleScroll);
+    </script>
+</body>
+</html>
