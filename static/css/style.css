@@ -103,6 +103,10 @@ header p {
     font-style: italic;
 }
 
+.tweet-book-author {
+    color: #657786;
+}
+
 /* Responsiveness */
 @media (max-width: 640px) {
     #tweet-feed {

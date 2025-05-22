@@ -37,12 +37,13 @@
             
             tweetEl.innerHTML = `
                 <div class="tweet-header">
-                    <span class="tweet-author">${tweet.author}</span>
+                    <span class="tweet-author">${tweet.username || tweet.author}</span>
                     <span class="tweet-time">${formatTime(tweet.timestamp)}</span>
                 </div>
                 <div class="tweet-content">${tweet.tweet}</div>
                 <div class="tweet-book">
                     <span class="tweet-title">${tweet.title}</span>
+                    <span class="tweet-book-author"> by ${tweet.author}</span>
                 </div>
             `;
             

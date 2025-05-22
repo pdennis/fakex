@@ -10,6 +10,7 @@ from ebooklib import epub
 from bs4 import BeautifulSoup
 import requests
 import glob
+from fakefeed.personas import LITERARY_PERSONAS
 
 # Configuration
 BOOK_LIBRARY_PATH = "/Volumes/mangohd/Books/newLibrary"
@@ -143,9 +144,23 @@ def extract_book_info(file_path):
         "file_path": file_path
     }
 
+def get_random_persona():
+    """Get a random literary persona from the available personas"""
+    persona_key = random.choice(list(LITERARY_PERSONAS.keys()))
+    persona_data = LITERARY_PERSONAS[persona_key]
+    display_name = persona_data["display_name"]
+    context = persona_data["context"]
+    # Return the persona key, display name, and context
+    return persona_key, display_name, context
+
 def generate_tweet(book_info):
     """Generate a tweet about the book passage using Ollama"""
+    # Get a random persona to inject personality into the tweet
+    persona_key, display_name, persona_context = get_random_persona()
+    
     prompt = f"""
+    {persona_context}
+    
     Author: {book_info['author']}
     Title: {book_info['title']}
     
@@ -153,7 +168,7 @@ def generate_tweet(book_info):
     {book_info['passage']}
     
     Task: Use this passage, and the context around it (the author, etc) as the inspiration for a tweet. It should not simply be a summary of the passage. Extract an interesting idea, identify a meta-concept or the author's decision making, or tie an idea from the passage to a historical event or another work.  No hashtags. Only output tweet text. 
-    Be interesting and thought-provoking.  400 characters or less. Do not phrase your post as a question, make it a statement.
+    Be interesting and thought-provoking.  300 characters or less. Do not phrase your post as a question, make it a statement.
     """
     
     try:
@@ -177,21 +192,24 @@ def generate_tweet(book_info):
                 "author": book_info['author'],
                 "title": book_info['title'],
                 "tweet": tweet_text,
-                "timestamp": time.time()
+                "timestamp": time.time(),
+                "username": display_name
             }
         else:
             return {
                 "author": book_info['author'],
                 "title": book_info['title'],
                 "tweet": f"Failed to generate tweet: {response.status_code}",
-                "timestamp": time.time()
+                "timestamp": time.time(),
+                "username": display_name
             }
     except Exception as e:
         return {
             "author": book_info['author'],
             "title": book_info['title'],
             "tweet": f"Error generating tweet: {str(e)}",
-            "timestamp": time.time()
+            "timestamp": time.time(),
+            "username": display_name
         }
 
 def tweet_generator():

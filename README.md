@@ -7,6 +7,7 @@ FakeFeed is a web application that generates tweet-like content from your ebook 
 - Randomly selects books from your ebook library
 - Extracts passages from EPUB and TXT files
 - Uses Ollama (gemma3:4b model) to generate thoughtful tweets
+- Varies tweet perspectives using 10 different literary personas
 - Real-time scrollable feed interface
 - Infinite scroll loading of new content
 
